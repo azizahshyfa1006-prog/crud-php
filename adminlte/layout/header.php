@@ -29,11 +29,6 @@
 <body class="hold-transition sidebar-mini layout-fixed">
 <div class="wrapper">
 
-  <!-- Preloader -->
-  <div class="preloader flex-column justify-content-center align-items-center">
-    <img class="animation__shake" src="dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60" width="60">
-  </div>
-
   <!-- Navbar -->
   <nav class="main-header navbar navbar-expand navbar-white navbar-light">
     <!-- Left navbar links -->
@@ -211,37 +206,34 @@
                with font-awesome or any other icon font library -->
           <li class="nav-header">Daftar Menu</li>
           <li class="nav-item">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-box"></i>
-              <p>
-                Data Barang
-              </p>
-            </a>
+              <a href="index.php" class="nav-link">
+                  <i class="nav-icon fas fa-box"></i>
+                  <p>Data Barang</p>
+              </a>
           </li>
-          <li class="nav-item">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-user-graduate"></i>
-              <p>
-                Data Siswa
-              </p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-user"></i>
-              <p>
-                Data Akun
-              </p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-sign-out-alt"></i>
-              <p>
-                Logout
-              </p>
-            </a>
-          </li>
+         <li class="nav-item">
+    <a href="index.php?page=siswa" class="nav-link">
+        <i class="nav-icon fas fa-users"></i>
+        <p>Data Siswa</p>
+    </a>
+</li>
+         
+<li class="nav-item">
+    <a href="index.php?page=akun" class="nav-link">
+        <i class="nav-icon fas fa-user"></i>
+        <p>Data Akun</p>
+    </a>
+</li>
+
+         
+<li class="nav-item">
+    <a href="logout.php" class="nav-link"
+       onclick="return confirm('Apakah Anda yakin ingin keluar?');">
+        <i class="nav-icon fas fa-sign-out-alt"></i>
+        <p>Logout</p>
+    </a>
+</li>
+
         </ul>
       </nav>
       <!-- /.sidebar-menu -->

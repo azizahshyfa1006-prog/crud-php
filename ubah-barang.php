@@ -7,7 +7,7 @@ include 'layout/header.php';
 // mengambil id_barang dari url
 $id_barang = (int)$_GET['id_barang'];
 
-$barang = select("SELECT * FROM `data barang` WHERE id_barang = $id_barang")[0];
+$barang = select("SELECT * FROM barang WHERE id_barang = $id_barang")[0];
 
 // check apakah tombol ubah ditekan
 if (isset($_POST['ubah'])) {

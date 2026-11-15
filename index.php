@@ -1,643 +1,802 @@
- <?php 
+<?php
 
 session_start();
 
-// membatasi halaman sebelum login
+// Membatasi halaman sebelum login
 if (!isset($_SESSION['login'])) {
     echo "<script>
-            alert('login dulu');
-            document.location.href = 'login.php';
-          </script>";
-    exit;
-}
-
-// membatasi halaman sesuai user login
-if ($_SESSION['level'] != 1 and $_SESSION['level'] != 2) {
-    echo "<script>
-            alert('Perhatian anda tidak punya hak akses');
-            document.location.href = 'index.php';
-          </script>";
+        alert('Login dulu');
+        document.location.href = 'login.php';
+    </script>";
     exit;
 }
 
 $title = 'Data Barang';
 
-include 'adminlte/layout/header.php'; 
+// Memanggil fungsi CRUD
+require_once 'config/controller.php';
 
-$data_barang = select("SELECT * FROM barang");
+// Menangkap parameter halaman (default ke 'barang')
+$page = $_GET['page'] ?? 'barang';
 
- ?>
+// Memanggil header AdminLTE
+include 'adminlte/layout/header.php';
 
- <html>
-  <body>
-  <!-- Content Wrapper. Contains page content -->
-  <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
-    <div class="content-header">
-      <div class="container-fluid">
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <h1 class="m-0">Dashboard</h1>
-          </div><!-- /.col -->
-          <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="#">Home</a></li>
-              <li class="breadcrumb-item active">Dashboard v1</li>
-            </ol>
-          </div><!-- /.col -->
-        </div><!-- /.row -->
-      </div><!-- /.container-fluid -->
-    </div>
-    <!-- /.content-header -->
+// ==================================
+// PAGINATION
+// ==================================
 
-    <!-- Main content -->
-    <section class="content">
-      <div class="container-fluid">
-        <!-- Small boxes (Stat box) -->
-        <div class="row">
-          <div class="col-lg-3 col-6">
-            <!-- small box -->
-            <div class="small-box bg-info">
-              <div class="inner">
-                <h3>150</h3>
+$jumlahDataPerhalaman = 1;
 
-                <p>New Orders</p>
-              </div>
-              <div class="icon">
-                <i class="ion ion-bag"></i>
-              </div>
-              <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-            </div>
-          </div>
-          <!-- ./col -->
-          <div class="col-lg-3 col-6">
-            <!-- small box -->
-            <div class="small-box bg-success">
-              <div class="inner">
-                <h3>53<sup style="font-size: 20px">%</sup></h3>
+// ==================================
+// FILTER DATA BERDASARKAN TANGGAL
+// ==================================
 
-                <p>Bounce Rate</p>
-              </div>
-              <div class="icon">
-                <i class="ion ion-stats-bars"></i>
-              </div>
-              <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-            </div>
-          </div>
-          <!-- ./col -->
-          <div class="col-lg-3 col-6">
-            <!-- small box -->
-            <div class="small-box bg-warning">
-              <div class="inner">
-                <h3>44</h3>
+$filter_error = '';
+$tanggal_awal = '';
+$tanggal_akhir = '';
+$where = '';
 
-                <p>User Registrations</p>
-              </div>
-              <div class="icon">
-                <i class="ion ion-person-add"></i>
-              </div>
-              <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-            </div>
-          </div>
-          <!-- ./col -->
-          <div class="col-lg-3 col-6">
-            <!-- small box -->
-            <div class="small-box bg-danger">
-              <div class="inner">
-                <h3>65</h3>
+if (isset($_GET['filter'])) {
 
-                <p>Unique Visitors</p>
-              </div>
-              <div class="icon">
-                <i class="ion ion-pie-graph"></i>
-              </div>
-              <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-            </div>
-          </div>
-          <!-- ./col -->
-        </div>
-        <!-- /.row -->
-        <!-- Main row -->
-        <div class="row">
-          <!-- Left col -->
-          <section class="col-lg-7 connectedSortable">
-            <!-- Custom tabs (Charts with tabs)-->
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">
-                  <i class="fas fa-chart-pie mr-1"></i>
-                  Sales
-                </h3>
-                <div class="card-tools">
-                  <ul class="nav nav-pills ml-auto">
-                    <li class="nav-item">
-                      <a class="nav-link active" href="#revenue-chart" data-toggle="tab">Area</a>
-                    </li>
-                    <li class="nav-item">
-                      <a class="nav-link" href="#sales-chart" data-toggle="tab">Donut</a>
-                    </li>
-                  </ul>
-                </div>
-              </div><!-- /.card-header -->
-              <div class="card-body">
-                <div class="tab-content p-0">
-                  <!-- Morris chart - Sales -->
-                  <div class="chart tab-pane active" id="revenue-chart"
-                       style="position: relative; height: 300px;">
-                      <canvas id="revenue-chart-canvas" height="300" style="height: 300px;"></canvas>
-                   </div>
-                  <div class="chart tab-pane" id="sales-chart" style="position: relative; height: 300px;">
-                    <canvas id="sales-chart-canvas" height="300" style="height: 300px;"></canvas>
-                  </div>
-                </div>
-              </div><!-- /.card-body -->
-            </div>
-            <!-- /.card -->
+    $tanggal_awal = $_GET['tanggal_awal'] ?? '';
+    $tanggal_akhir = $_GET['tanggal_akhir'] ?? '';
 
-            <!-- DIRECT CHAT -->
-            <div class="card direct-chat direct-chat-primary">
-              <div class="card-header">
-                <h3 class="card-title">Direct Chat</h3>
+    // Validasi tanggal awal
+    $awal_valid = preg_match('/^\d{4}-\d{2}-\d{2}$/', $tanggal_awal)
+        && checkdate(
+            (int) substr($tanggal_awal, 5, 2),
+            (int) substr($tanggal_awal, 8, 2), 
+            (int) substr($tanggal_awal, 0, 4)
+        );
 
-                <div class="card-tools">
-                  <span title="3 New Messages" class="badge badge-primary">3</span>
-                  <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                    <i class="fas fa-minus"></i>
-                  </button>
-                  <button type="button" class="btn btn-tool" title="Contacts" data-widget="chat-pane-toggle">
-                    <i class="fas fa-comments"></i>
-                  </button>
-                  <button type="button" class="btn btn-tool" data-card-widget="remove">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </div>
-              </div>
-              <!-- /.card-header -->
-              <div class="card-body">
-                <!-- Conversations are loaded here -->
-                <div class="direct-chat-messages">
-                  <!-- Message. Default to the left -->
-                  <div class="direct-chat-msg">
-                    <div class="direct-chat-infos clearfix">
-                      <span class="direct-chat-name float-left">Alexander Pierce</span>
-                      <span class="direct-chat-timestamp float-right">23 Jan 2:00 pm</span>
-                    </div>
-                    <!-- /.direct-chat-infos -->
-                    <img class="direct-chat-img" src="dist/img/user1-128x128.jpg" alt="message user image">
-                    <!-- /.direct-chat-img -->
-                    <div class="direct-chat-text">
-                      Is this template really for free? That's unbelievable!
-                    </div>
-                    <!-- /.direct-chat-text -->
-                  </div>
-                  <!-- /.direct-chat-msg -->
+    // Validasi tanggal akhir
+    $akhir_valid = preg_match('/^\d{4}-\d{2}-\d{2}$/', $tanggal_akhir)
+        && checkdate(
+            (int) substr($tanggal_akhir, 5, 2),
+            (int) substr($tanggal_akhir, 8, 2), 
+            (int) substr($tanggal_akhir, 0, 4)
+        );
 
-                  <!-- Message to the right -->
-                  <div class="direct-chat-msg right">
-                    <div class="direct-chat-infos clearfix">
-                      <span class="direct-chat-name float-right">Sarah Bullock</span>
-                      <span class="direct-chat-timestamp float-left">23 Jan 2:05 pm</span>
-                    </div>
-                    <!-- /.direct-chat-infos -->
-                    <img class="direct-chat-img" src="dist/img/user3-128x128.jpg" alt="message user image">
-                    <!-- /.direct-chat-img -->
-                    <div class="direct-chat-text">
-                      You better believe it!
-                    </div>
-                    <!-- /.direct-chat-text -->
-                  </div>
-                  <!-- /.direct-chat-msg -->
+    if (!$awal_valid || !$akhir_valid) {
 
-                  <!-- Message. Default to the left -->
-                  <div class="direct-chat-msg">
-                    <div class="direct-chat-infos clearfix">
-                      <span class="direct-chat-name float-left">Alexander Pierce</span>
-                      <span class="direct-chat-timestamp float-right">23 Jan 5:37 pm</span>
-                    </div>
-                    <!-- /.direct-chat-infos -->
-                    <img class="direct-chat-img" src="dist/img/user1-128x128.jpg" alt="message user image">
-                    <!-- /.direct-chat-img -->
-                    <div class="direct-chat-text">
-                      Working with AdminLTE on a great new app! Wanna join?
-                    </div>
-                    <!-- /.direct-chat-text -->
-                  </div>
-                  <!-- /.direct-chat-msg -->
+        $filter_error = 'Tanggal yang dimasukkan tidak valid.';
 
-                  <!-- Message to the right -->
-                  <div class="direct-chat-msg right">
-                    <div class="direct-chat-infos clearfix">
-                      <span class="direct-chat-name float-right">Sarah Bullock</span>
-                      <span class="direct-chat-timestamp float-left">23 Jan 6:10 pm</span>
-                    </div>
-                    <!-- /.direct-chat-infos -->
-                    <img class="direct-chat-img" src="dist/img/user3-128x128.jpg" alt="message user image">
-                    <!-- /.direct-chat-img -->
-                    <div class="direct-chat-text">
-                      I would love to.
-                    </div>
-                    <!-- /.direct-chat-text -->
-                  </div>
-                  <!-- /.direct-chat-msg -->
+    } elseif ($tanggal_awal > $tanggal_akhir) {
 
-                </div>
-                <!--/.direct-chat-messages-->
+        $filter_error = 'Tanggal awal tidak boleh melebihi tanggal akhir.';
 
-                <!-- Contacts are loaded here -->
-                <div class="direct-chat-contacts">
-                  <ul class="contacts-list">
-                    <li>
-                      <a href="#">
-                        <img class="contacts-list-img" src="dist/img/user1-128x128.jpg" alt="User Avatar">
+    } else {
 
-                        <div class="contacts-list-info">
-                          <span class="contacts-list-name">
-                            Count Dracula
-                            <small class="contacts-list-date float-right">2/28/2015</small>
-                          </span>
-                          <span class="contacts-list-msg">How have you been? I was...</span>
-                        </div>
-                        <!-- /.contacts-list-info -->
-                      </a>
-                    </li>
-                    <!-- End Contact Item -->
-                    <li>
-                      <a href="#">
-                        <img class="contacts-list-img" src="dist/img/user7-128x128.jpg" alt="User Avatar">
+        $where = " WHERE tanggal >= '$tanggal_awal 00:00:00'
+                    AND tanggal <= '$tanggal_akhir 23:59:59' ";
+    }
+}
 
-                        <div class="contacts-list-info">
-                          <span class="contacts-list-name">
-                            Sarah Doe
-                            <small class="contacts-list-date float-right">2/23/2015</small>
-                          </span>
-                          <span class="contacts-list-msg">I will be waiting for...</span>
-                        </div>
-                        <!-- /.contacts-list-info -->
-                      </a>
-                    </li>
-                    <!-- End Contact Item -->
-                    <li>
-                      <a href="#">
-                        <img class="contacts-list-img" src="dist/img/user3-128x128.jpg" alt="User Avatar">
+// ==================================
+// MENGHITUNG INFORMASI BARANG
+// ==================================
 
-                        <div class="contacts-list-info">
-                          <span class="contacts-list-name">
-                            Nadia Jolie
-                            <small class="contacts-list-date float-right">2/20/2015</small>
-                          </span>
-                          <span class="contacts-list-msg">I'll call you back at...</span>
-                        </div>
-                        <!-- /.contacts-list-info -->
-                      </a>
-                    </li>
-                    <!-- End Contact Item -->
-                    <li>
-                      <a href="#">
-                        <img class="contacts-list-img" src="dist/img/user5-128x128.jpg" alt="User Avatar">
+if ($filter_error == '') {
 
-                        <div class="contacts-list-info">
-                          <span class="contacts-list-name">
-                            Nora S. Vans
-                            <small class="contacts-list-date float-right">2/10/2015</small>
-                          </span>
-                          <span class="contacts-list-msg">Where is your new...</span>
-                        </div>
-                        <!-- /.contacts-list-info -->
-                      </a>
-                    </li>
-                    <!-- End Contact Item -->
-                    <li>
-                      <a href="#">
-                        <img class="contacts-list-img" src="dist/img/user6-128x128.jpg" alt="User Avatar">
+    $semua_barang = select("
+        SELECT * FROM barang
+        $where
+        ORDER BY id_barang DESC
+    ");
 
-                        <div class="contacts-list-info">
-                          <span class="contacts-list-name">
-                            John K.
-                            <small class="contacts-list-date float-right">1/27/2015</small>
-                          </span>
-                          <span class="contacts-list-msg">Can I take a look at...</span>
-                        </div>
-                        <!-- /.contacts-list-info -->
-                      </a>
-                    </li>
-                    <!-- End Contact Item -->
-                    <li>
-                      <a href="#">
-                        <img class="contacts-list-img" src="dist/img/user8-128x128.jpg" alt="User Avatar">
+} else {
 
-                        <div class="contacts-list-info">
-                          <span class="contacts-list-name">
-                            Kenneth M.
-                            <small class="contacts-list-date float-right">1/4/2015</small>
-                          </span>
-                          <span class="contacts-list-msg">Never mind I found...</span>
-                        </div>
-                        <!-- /.contacts-list-info -->
-                      </a>
-                    </li>
-                    <!-- End Contact Item -->
-                  </ul>
-                  <!-- /.contacts-list -->
-                </div>
-                <!-- /.direct-chat-pane -->
-              </div>
-              <!-- /.card-body -->
-              <div class="card-footer">
-                <form action="#" method="post">
-                  <div class="input-group">
-                    <input type="text" name="message" placeholder="Type Message ..." class="form-control">
-                    <span class="input-group-append">
-                      <button type="button" class="btn btn-primary">Send</button>
-                    </span>
-                  </div>
-                </form>
-              </div>
-              <!-- /.card-footer-->
-            </div>
-            <!--/.direct-chat -->
+    $semua_barang = [];
 
-            <!-- TO DO List -->
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">
-                  <i class="ion ion-clipboard mr-1"></i>
-                  To Do List
-                </h3>
+}
 
-                <div class="card-tools">
-                  <ul class="pagination pagination-sm">
-                    <li class="page-item"><a href="#" class="page-link">&laquo;</a></li>
-                    <li class="page-item"><a href="#" class="page-link">1</a></li>
-                    <li class="page-item"><a href="#" class="page-link">2</a></li>
-                    <li class="page-item"><a href="#" class="page-link">3</a></li>
-                    <li class="page-item"><a href="#" class="page-link">&raquo;</a></li>
-                  </ul>
-                </div>
-              </div>
-              <!-- /.card-header -->
-              <div class="card-body">
-                <ul class="todo-list" data-widget="todo-list">
-                  <li>
-                    <!-- drag handle -->
-                    <span class="handle">
-                      <i class="fas fa-ellipsis-v"></i>
-                      <i class="fas fa-ellipsis-v"></i>
-                    </span>
-                    <!-- checkbox -->
-                    <div  class="icheck-primary d-inline ml-2">
-                      <input type="checkbox" value="" name="todo1" id="todoCheck1">
-                      <label for="todoCheck1"></label>
-                    </div>
-                    <!-- todo text -->
-                    <span class="text">Design a nice theme</span>
-                    <!-- Emphasis label -->
-                    <small class="badge badge-danger"><i class="far fa-clock"></i> 2 mins</small>
-                    <!-- General tools such as edit or delete-->
-                    <div class="tools">
-                      <i class="fas fa-edit"></i>
-                      <i class="fas fa-trash-o"></i>
-                    </div>
-                  </li>
-                  <li>
-                    <span class="handle">
-                      <i class="fas fa-ellipsis-v"></i>
-                      <i class="fas fa-ellipsis-v"></i>
-                    </span>
-                    <div  class="icheck-primary d-inline ml-2">
-                      <input type="checkbox" value="" name="todo2" id="todoCheck2" checked>
-                      <label for="todoCheck2"></label>
-                    </div>
-                    <span class="text">Make the theme responsive</span>
-                    <small class="badge badge-info"><i class="far fa-clock"></i> 4 hours</small>
-                    <div class="tools">
-                      <i class="fas fa-edit"></i>
-                      <i class="fas fa-trash-o"></i>
-                    </div>
-                  </li>
-                  <li>
-                    <span class="handle">
-                      <i class="fas fa-ellipsis-v"></i>
-                      <i class="fas fa-ellipsis-v"></i>
-                    </span>
-                    <div  class="icheck-primary d-inline ml-2">
-                      <input type="checkbox" value="" name="todo3" id="todoCheck3">
-                      <label for="todoCheck3"></label>
-                    </div>
-                    <span class="text">Let theme shine like a star</span>
-                    <small class="badge badge-warning"><i class="far fa-clock"></i> 1 day</small>
-                    <div class="tools">
-                      <i class="fas fa-edit"></i>
-                      <i class="fas fa-trash-o"></i>
-                    </div>
-                  </li>
-                  <li>
-                    <span class="handle">
-                      <i class="fas fa-ellipsis-v"></i>
-                      <i class="fas fa-ellipsis-v"></i>
-                    </span>
-                    <div  class="icheck-primary d-inline ml-2">
-                      <input type="checkbox" value="" name="todo4" id="todoCheck4">
-                      <label for="todoCheck4"></label>
-                    </div>
-                    <span class="text">Let theme shine like a star</span>
-                    <small class="badge badge-success"><i class="far fa-clock"></i> 3 days</small>
-                    <div class="tools">
-                      <i class="fas fa-edit"></i>
-                      <i class="fas fa-trash-o"></i>
-                    </div>
-                  </li>
-                  <li>
-                    <span class="handle">
-                      <i class="fas fa-ellipsis-v"></i>
-                      <i class="fas fa-ellipsis-v"></i>
-                    </span>
-                    <div  class="icheck-primary d-inline ml-2">
-                      <input type="checkbox" value="" name="todo5" id="todoCheck5">
-                      <label for="todoCheck5"></label>
-                    </div>
-                    <span class="text">Check your messages and notifications</span>
-                    <small class="badge badge-primary"><i class="far fa-clock"></i> 1 week</small>
-                    <div class="tools">
-                      <i class="fas fa-edit"></i>
-                      <i class="fas fa-trash-o"></i>
-                    </div>
-                  </li>
-                  <li>
-                    <span class="handle">
-                      <i class="fas fa-ellipsis-v"></i>
-                      <i class="fas fa-ellipsis-v"></i>
-                    </span>
-                    <div  class="icheck-primary d-inline ml-2">
-                      <input type="checkbox" value="" name="todo6" id="todoCheck6">
-                      <label for="todoCheck6"></label>
-                    </div>
-                    <span class="text">Let theme shine like a star</span>
-                    <small class="badge badge-secondary"><i class="far fa-clock"></i> 1 month</small>
-                    <div class="tools">
-                      <i class="fas fa-edit"></i>
-                      <i class="fas fa-trash-o"></i>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-              <!-- /.card-body -->
-              <div class="card-footer clearfix">
-                <button type="button" class="btn btn-primary float-right"><i class="fas fa-plus"></i> Add item</button>
-              </div>
-            </div>
-            <!-- /.card -->
-          </section>
-          <!-- /.Left col -->
-          <!-- right col (We are only adding the ID to make the widgets sortable)-->
-          <section class="col-lg-5 connectedSortable">
+$total_barang = count($semua_barang);
+$total_stok = 0;
+$total_nilai = 0;
+$total_barcode = 0;
 
-            <!-- Map card -->
-            <div class="card bg-gradient-primary">
-              <div class="card-header border-0">
-                <h3 class="card-title">
-                  <i class="fas fa-map-marker-alt mr-1"></i>
-                  Visitors
-                </h3>
-                <!-- card tools -->
-                <div class="card-tools">
-                  <button type="button" class="btn btn-primary btn-sm daterange" title="Date range">
-                    <i class="far fa-calendar-alt"></i>
-                  </button>
-                  <button type="button" class="btn btn-primary btn-sm" data-card-widget="collapse" title="Collapse">
-                    <i class="fas fa-minus"></i>
-                  </button>
-                </div>
-                <!-- /.card-tools -->
-              </div>
-              <div class="card-body">
-                <div id="world-map" style="height: 250px; width: 100%;"></div>
-              </div>
-              <!-- /.card-body-->
-              <div class="card-footer bg-transparent">
-                <div class="row">
-                  <div class="col-4 text-center">
-                    <div id="sparkline-1"></div>
-                    <div class="text-white">Visitors</div>
-                  </div>
-                  <!-- ./col -->
-                  <div class="col-4 text-center">
-                    <div id="sparkline-2"></div>
-                    <div class="text-white">Online</div>
-                  </div>
-                  <!-- ./col -->
-                  <div class="col-4 text-center">
-                    <div id="sparkline-3"></div>
-                    <div class="text-white">Sales</div>
-                  </div>
-                  <!-- ./col -->
-                </div>
-                <!-- /.row -->
-              </div>
-            </div>
-            <!-- /.card -->
+foreach ($semua_barang as $barang) {
 
-            <!-- solid sales graph -->
-            <div class="card bg-gradient-info">
-              <div class="card-header border-0">
-                <h3 class="card-title">
-                  <i class="fas fa-th mr-1"></i>
-                  Sales Graph
-                </h3>
+    $total_stok += $barang['jumlah'];
 
-                <div class="card-tools">
-                  <button type="button" class="btn bg-info btn-sm" data-card-widget="collapse">
-                    <i class="fas fa-minus"></i>
-                  </button>
-                  <button type="button" class="btn bg-info btn-sm" data-card-widget="remove">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </div>
-              </div>
-              <div class="card-body">
-                <canvas class="chart" id="line-chart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
-              </div>
-              <!-- /.card-body -->
-              <div class="card-footer bg-transparent">
-                <div class="row">
-                  <div class="col-4 text-center">
-                    <input type="text" class="knob" data-readonly="true" value="20" data-width="60" data-height="60"
-                           data-fgColor="#39CCCC">
+    $total_nilai += $barang['harga'] * $barang['jumlah'];
 
-                    <div class="text-white">Mail-Orders</div>
-                  </div>
-                  <!-- ./col -->
-                  <div class="col-4 text-center">
-                    <input type="text" class="knob" data-readonly="true" value="50" data-width="60" data-height="60"
-                           data-fgColor="#39CCCC">
+    if (!empty($barang['barcode'])) {
+        $total_barcode++;
+    }
+}
 
-                    <div class="text-white">Online</div>
-                  </div>
-                  <!-- ./col -->
-                  <div class="col-4 text-center">
-                    <input type="text" class="knob" data-readonly="true" value="30" data-width="60" data-height="60"
-                           data-fgColor="#39CCCC">
+// ==================================
+// PAGINATION DATA BARANG
+// ==================================
 
-                    <div class="text-white">In-Store</div>
-                  </div>
-                  <!-- ./col -->
-                </div>
-                <!-- /.row -->
-              </div>
-              <!-- /.card-footer -->
-            </div>
-            <!-- /.card -->
+$jumlahData = $total_barang;
 
-            <!-- Calendar -->
-            <div class="card bg-gradient-success">
-              <div class="card-header border-0">
+$jumlahHalaman = ceil(
+    $jumlahData / $jumlahDataPerhalaman
+);
 
-                <h3 class="card-title">
-                  <i class="far fa-calendar-alt"></i>
-                  Calendar
-                </h3>
-                <!-- tools card -->
-                <div class="card-tools">
-                  <!-- button with a dropdown -->
-                  <div class="btn-group">
-                    <button type="button" class="btn btn-success btn-sm dropdown-toggle" data-toggle="dropdown" data-offset="-52">
-                      <i class="fas fa-bars"></i>
-                    </button>
-                    <div class="dropdown-menu" role="menu">
-                      <a href="#" class="dropdown-item">Add new event</a>
-                      <a href="#" class="dropdown-item">Clear events</a>
-                      <div class="dropdown-divider"></div>
-                      <a href="#" class="dropdown-item">View calendar</a>
-                    </div>
-                  </div>
-                  <button type="button" class="btn btn-success btn-sm" data-card-widget="collapse">
-                    <i class="fas fa-minus"></i>
-                  </button>
-                  <button type="button" class="btn btn-success btn-sm" data-card-widget="remove">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </div>
-                <!-- /. tools -->
-              </div>
-              <!-- /.card-header -->
-              <div class="card-body pt-0">
-                <!--The calendar -->
-                <div id="calendar" style="width: 100%"></div>
-              </div>
-              <!-- /.card-body -->
-            </div>
-            <!-- /.card -->
-          </section>
-          <!-- right col -->
-        </div>
-        <!-- /.row (main row) -->
-      </div><!-- /.container-fluid -->
-    </section>
-    <!-- /.content -->
-  </div>
-  <!-- /.content-wrapper -->
+$halamanAktif = isset($_GET['halaman'])
+    ? (int) $_GET['halaman']
+    : 1;
 
- <?php
-include 'adminlte/layout/footer.php'; 
+if ($halamanAktif < 1) {
+    $halamanAktif = 1;
+}
+
+if ($jumlahHalaman > 0 && $halamanAktif > $jumlahHalaman) {
+    $halamanAktif = $jumlahHalaman;
+}
+
+$awalData = ($jumlahDataPerhalaman * $halamanAktif) - $jumlahDataPerhalaman;
+
+// Mengambil data dengan pagination
+if ($jumlahData > 0 && $filter_error == '') {
+
+    $data_barang = select("
+        SELECT * FROM barang
+        $where
+        ORDER BY id_barang DESC
+        LIMIT $awalData, $jumlahDataPerhalaman
+    ");
+
+} else {
+
+    $data_barang = [];
+
+}
+
 ?>
-</body>
-</html>
+
+<!-- CSS TAMBAHAN -->
+<style>
+    .content-header h1 {
+        font-size: 28px;
+        font-weight: 600;
+    }
+
+    .small-box {
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.12);
+    }
+
+    .small-box .inner h3 {
+        font-size: 30px;
+        font-weight: bold;
+    }
+
+    .small-box .icon {
+        top: 10px;
+        right: 15px;
+    }
+
+    .small-box .icon i {
+        font-size: 65px;
+    }
+
+    .card {
+        border-radius: 5px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+    }
+
+    .card-header {
+        background: #fff;
+        padding: 15px 20px;
+    }
+
+    .card-title {
+        font-size: 17px;
+        font-weight: 500;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .table th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .barcode-img {
+        max-width: 100px;
+        height: auto;
+    }
+</style>
+
+<?php if ($page == 'siswa') : ?>
+
+    <?php
+    $data_siswa = select("SELECT * FROM siswa ORDER BY id_siswa ASC");
+    ?>
+
+    <div class="content-wrapper">
+
+        <!-- JUDUL HALAMAN -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <h1>
+                    <i class="fas fa-users mr-2"></i>
+                    Data Siswa
+                </h1>
+            </div>
+        </div>
+
+        <!-- TABEL DATA SISWA -->
+        <section class="content">
+            <div class="container-fluid">
+
+                <div class="card">
+
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            Tabel Data Siswa
+                        </h3>
+                    </div>
+
+                    <div class="card-body">
+
+                        <!-- TOMBOL -->
+                        <a href="tambah-siswa.php"
+                           class="btn btn-primary mb-3">
+                            <i class="fas fa-plus-circle"></i>
+                            Tambah
+                        </a>
+
+                        <a href="download-excel-siswa.php"
+                           class="btn btn-success mb-3">
+                            <i class="fas fa-file-excel"></i>
+                            Download Excel
+                        </a>
+
+                        <a href="download-pdf-siswa.php"
+                           class="btn btn-danger mb-3">
+                            <i class="fas fa-file-pdf"></i>
+                            Download PDF
+                        </a>
+
+                        <!-- TABLE -->
+                        <div class="table-responsive">
+
+                            <table class="table table-bordered table-striped">
+
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Nama</th>
+                                        <th>Prodi</th>
+                                        <th>Jenis Kelamin</th>
+                                        <th>Telepon</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    <?php $no = 1; ?>
+
+                                    <?php if (count($data_siswa) > 0) : ?>
+
+                                        <?php foreach ($data_siswa as $siswa) : ?>
+
+                                            <tr>
+
+                                                <td><?= $no++; ?></td>
+
+                                                <td>
+                                                    <?= htmlspecialchars($siswa['nama']); ?>
+                                                </td>
+
+                                                <td>
+                                                    <?= htmlspecialchars($siswa['prodi']); ?>
+                                                </td>
+
+                                                <td>
+                                                    <?= htmlspecialchars($siswa['jk']); ?>
+                                                </td>
+
+                                                <td>
+                                                    <?= htmlspecialchars($siswa['telepon']); ?>
+                                                </td>
+
+                                                <td class="text-center">
+
+                                                    <div class="d-flex justify-content-center">
+
+                                                        <a href="detail-siswa.php?id_siswa=<?= $siswa['id_siswa']; ?>"
+                                                           class="btn btn-secondary btn-sm mr-1">
+                                                            <i class="fas fa-eye"></i>
+                                                            Detail
+                                                        </a>
+
+                                                        <a href="ubah-siswa.php?id_siswa=<?= $siswa['id_siswa']; ?>"
+                                                           class="btn btn-success btn-sm mr-1">
+                                                            <i class="fas fa-edit"></i>
+                                                            Ubah
+                                                        </a>
+
+                                                        <a href="hapus-siswa.php?id_siswa=<?= $siswa['id_siswa']; ?>"
+                                                           class="btn btn-danger btn-sm"
+                                                           onclick="return confirm('Yakin ingin menghapus data siswa ini?');">
+                                                            <i class="fas fa-trash"></i>
+                                                            Hapus
+                                                        </a>
+
+                                                    </div>
+
+                                                </td>
+
+                                            </tr>
+
+                                        <?php endforeach; ?>
+
+                                    <?php else : ?>
+
+                                        <tr>
+                                            <td colspan="6" class="text-center">
+                                                Data siswa tidak ditemukan.
+                                            </td>
+                                        </tr>
+
+                                    <?php endif; ?>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+
+<?php elseif ($page == 'akun') : ?>
+
+    <?php
+    // Mengambil seluruh data akun
+    $data_akun = select("SELECT * FROM akun ORDER BY id_akun ASC");
+    ?>
+
+    <div class="content-wrapper">
+
+        <!-- JUDUL HALAMAN -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <h1>
+                    <i class="fas fa-user-cog mr-2"></i>
+                    Data Akun
+                </h1>
+            </div>
+        </div>
+
+        <!-- TABEL DATA AKUN -->
+        <section class="content">
+            <div class="container-fluid">
+
+                <div class="card">
+
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            Tabel Data Akun
+                        </h3>
+                    </div>
+
+                    <div class="card-body">
+
+                        <!-- TOMBOL KELOLA AKUN -->
+                        <a href="akun.php" class="btn btn-primary mb-3">
+                            <i class="fas fa-user-plus"></i>
+                            Kelola Akun
+                        </a>
+
+                        <div class="table-responsive">
+
+                            <table class="table table-bordered table-striped">
+
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Nama</th>
+                                        <th>Username</th>
+                                        <th>Email</th>
+                                        <th>Password</th>
+                                        <th>Level</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    <?php $no = 1; ?>
+
+                                    <?php if (count($data_akun) > 0) : ?>
+
+                                        <?php foreach ($data_akun as $akun) : ?>
+
+                                            <tr>
+
+                                                <td><?= $no++; ?></td>
+
+                                                <td>
+                                                    <?= htmlspecialchars($akun['nama']); ?>
+                                                </td>
+
+                                                <td>
+                                                    <?= htmlspecialchars($akun['username']); ?>
+                                                </td>
+
+                                                <td>
+                                                    <?= htmlspecialchars($akun['email']); ?>
+                                                </td>
+
+                                                <td>
+                                                    Password Ter-enkripsi
+                                                </td>
+
+                                                <td>
+                                                    <?php
+                                                    if ($akun['level'] == 1) {
+                                                        echo 'Admin';
+                                                    } elseif ($akun['level'] == 2) {
+                                                        echo 'Operator Barang';
+                                                    } elseif ($akun['level'] == 3) {
+                                                        echo 'Operator Mahasiswa';
+                                                    } else {
+                                                        echo 'Tidak Diketahui';
+                                                    }
+                                                    ?>
+                                                </td>
+
+                                                <td class="text-center">
+
+                                                    <a href="akun.php"
+                                                       class="btn btn-success btn-sm">
+                                                        <i class="fas fa-edit"></i>
+                                                        Ubah
+                                                    </a>
+
+                                                </td>
+
+                                            </tr>
+
+                                        <?php endforeach; ?>
+
+                                    <?php else : ?>
+
+                                        <tr>
+                                            <td colspan="7" class="text-center">
+                                                Data akun tidak ditemukan.
+                                            </td>
+                                        </tr>
+
+                                    <?php endif; ?>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+
+<?php else : ?>
+
+    <div class="content-wrapper">
+        <div class="content-header">
+            <div class="container-fluid">
+                <h1>
+                    <i class="fas fa-list mr-2"></i>
+                    Data Barang
+                </h1>
+            </div>
+        </div>
+
+        <section class="content">
+            <div class="container-fluid">
+
+                <!-- KOTAK INFORMASI -->
+                <div class="row">
+
+                    <!-- TOTAL BARANG -->
+                    <div class="col-lg-3 col-6">
+                        <div class="small-box bg-info">
+                            <div class="inner">
+                                <h3><?= $total_barang; ?></h3>
+                                <p>Total Jenis Barang</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-box"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TOTAL STOK -->
+                    <div class="col-lg-3 col-6">
+                        <div class="small-box bg-success">
+                            <div class="inner">
+                                <h3><?= $total_stok; ?></h3>
+                                <p>Total Stok Barang</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-shopping-bag"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TOTAL BARCODE -->
+                    <div class="col-lg-3 col-6">
+                        <div class="small-box bg-warning">
+                            <div class="inner">
+                                <h3><?= $total_barcode; ?></h3>
+                                <p>Total Barcode</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-barcode"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TOTAL NILAI -->
+                    <div class="col-lg-3 col-6">
+                        <div class="small-box bg-danger">
+                            <div class="inner">
+                                <h3 style="font-size: 22px;">
+                                    Rp <?= number_format($total_nilai, 0, ',', '.'); ?>
+                                </h3>
+                                <p>Total Nilai Stok</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TABEL DATA BARANG -->
+                <div class="card">
+
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            Tabel Data Barang
+                        </h3>
+                    </div>
+
+                    <div class="card-body">
+
+                        <!-- TOMBOL TAMBAH -->
+                        <a href="tambah-barang.php" class="btn btn-primary mb-3">
+                            <i class="fas fa-plus-circle"></i>
+                            Tambah
+                        </a>
+
+                        <!-- TOMBOL FILTER -->
+                        <button type="button"
+                                class="btn btn-success mb-3"
+                                data-toggle="modal"
+                                data-target="#modalFilter">
+                            <i class="fas fa-search"></i>
+                            Filter Data
+                        </button>
+
+                        <!-- TOMBOL RESET -->
+                        <?php if (isset($_GET['filter'])) : ?>
+                            <a href="index.php" class="btn btn-secondary mb-3">
+                                <i class="fas fa-sync"></i>
+                                Reset Filter
+                            </a>
+                        <?php endif; ?>
+
+                        <!-- PESAN ERROR -->
+                        <?php if ($filter_error != '') : ?>
+                            <div class="alert alert-danger">
+                                <?= htmlspecialchars($filter_error); ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="table-responsive">
+
+                            <table class="table table-bordered table-striped">
+
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Nama</th>
+                                        <th>Jumlah</th>
+                                        <th>Harga</th>
+                                        <th>Barcode</th>
+                                        <th>Tanggal</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    <?php $no = $awalData + 1; ?>
+
+                                    <?php if (count($data_barang) > 0) : ?>
+
+                                        <?php foreach ($data_barang as $barang) : ?>
+
+                                            <tr>
+
+                                                <td><?= $no++; ?></td>
+
+                                                <td>
+                                                    <?= htmlspecialchars($barang['nama']); ?>
+                                                </td>
+
+                                                <td>
+                                                    <?= $barang['jumlah']; ?>
+                                                </td>
+
+                                                <td>
+                                                    Rp. <?= number_format($barang['harga'], 0, ',', '.'); ?>
+                                                </td>
+
+                                                <!-- BARCODE -->
+                                                <td class="text-center">
+                                                    <?php if (!empty($barang['barcode'])) : ?>
+
+                                                        <img
+                                                            class="barcode-img"
+                                                            alt="barcode"
+                                                            src="barcode.php?codetype=Code128&size=15&text=<?= urlencode($barang['barcode']); ?>&print=true"
+                                                        >
+
+                                                    <?php else : ?>
+                                                        -
+                                                    <?php endif; ?>
+                                                </td>
+
+                                                <!-- TANGGAL -->
+                                                <td>
+                                                    <?= date(
+                                                        "d/m/Y | H:i:s",
+                                                        strtotime($barang['tanggal'])
+                                                    ); ?>
+                                                </td>
+
+                                                <!-- AKSI -->
+                                                <td class="text-center">
+                                                    <div class="d-flex justify-content-center">
+
+                                                        <a href="ubah-barang.php?id_barang=<?= $barang['id_barang']; ?>"
+                                                           class="btn btn-success btn-sm mr-1">
+                                                            <i class="fas fa-edit"></i>
+                                                            Ubah
+                                                        </a>
+
+                                                        <a href="hapus-barang.php?id_barang=<?= $barang['id_barang']; ?>"
+                                                           class="btn btn-danger btn-sm"
+                                                           onclick="return confirm('Yakin Data Barang Akan Dihapus?');">
+                                                            <i class="fas fa-trash"></i>
+                                                            Hapus
+                                                        </a>
+
+                                                    </div>
+                                                </td>
+
+                                            </tr>
+
+                                        <?php endforeach; ?>
+
+                                    <?php else : ?>
+
+                                        <tr>
+                                            <td colspan="7" class="text-center">
+                                                Data barang tidak ditemukan.
+                                            </td>
+                                        </tr>
+
+                                    <?php endif; ?>
+
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- PAGINATION -->
+                        <div class="mt-2 d-flex justify-content-end">
+
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination">
+
+                                    <?php
+                                    $parameterPagination = [
+                                        'page' => $page
+                                    ];
+
+                                    if (isset($_GET['filter'])) {
+                                        $parameterPagination['filter'] = 1;
+                                        $parameterPagination['tanggal_awal'] = $tanggal_awal;
+                                        $parameterPagination['tanggal_akhir'] = $tanggal_akhir;
+                                    }
+                                    ?>
+
+                                    <!-- PREVIOUS -->
+                                    <?php if ($halamanAktif > 1) : ?>
+
+                                        <li class="page-item">
+                                            <a class="page-link"
+                                               href="index.php?<?= http_build_query(array_merge($parameterPagination, ['halaman' => $halamanAktif - 1])); ?>"
+                                               aria-label="Previous">
+                                                <span aria-hidden="true">&laquo;</span>
+                                            </a>
+                                        </li>
+
+                                    <?php endif; ?>
+
+                                    <!-- NOMOR HALAMAN -->
+                                    <?php for ($i = 1; $i <= $jumlahHalaman; $i++) : ?>
+
+                                        <?php if ($i == $halamanAktif) : ?>
+
+                                            <li class="page-item active">
+                                                <a class="page-link" href="#">
+                                                    <?= $i; ?>
+                                                </a>
+                                            </li>
+
+                                        <?php else : ?>
+
+                                            <li class="page-item">
+                                                <a class="page-link"
+                                                   href="index.php?<?= http_build_query(array_merge($parameterPagination, ['halaman' => $i])); ?>">
+                                                    <?= $i; ?>
+                                                </a>
+                                            </li>
+
+                                        <?php endif; ?>
+
+                                    <?php endfor; ?>
+
+                                    <!-- NEXT -->
+                                    <?php if ($halamanAktif < $jumlahHalaman) : ?>
+
+                                        <li class="page-item">
+                                            <a class="page-link"
+                                               href="index.php?<?= http_build_query(array_merge($parameterPagination, ['halaman' => $halamanAktif + 1])); ?>"
+                                               aria-label="Next">
+                                                <span aria-hidden="true">&raquo;</span>
+                                            </a>
+                                        </li>
+
+                                    <?php endif; ?>
+
+                                </ul>
+                            </nav>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+
+<?php endif; ?>

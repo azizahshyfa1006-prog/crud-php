@@ -1,10 +1,13 @@
 <?php
 
+require_once __DIR__ . '/database.php';
+
 function select($query)
 {
     global $db;
 
     $result = mysqli_query($db, $query);
+
     $rows = [];
 
     while ($row = mysqli_fetch_assoc($result)) {
@@ -13,7 +16,6 @@ function select($query)
 
     return $rows;
 }
-
 // fungsi menambahkan data barang
 function create_barang($post)
 {
@@ -37,9 +39,9 @@ function update_barang($post)
     global $db;
 
     $id_barang = $post['id_barang'];
-    $nama      = $post['nama'];
-    $jumlah    = $post['jumlah'];
-    $harga     = $post['harga'];
+    $nama      = strip_tags($post['nama']);   
+    $jumlah    = strip_tags($post['jumlah']); 
+    $harga     = strip_tags($post['harga']);  
 
     $query = "UPDATE barang SET nama = '$nama', jumlah = '$jumlah', harga = '$harga' WHERE id_barang = $id_barang";
 

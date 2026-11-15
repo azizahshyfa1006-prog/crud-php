@@ -27,7 +27,7 @@ if (isset($_POST['tambah'])) {
   if (create_akun($_POST) > 0) {
     echo "<script>
             alert('Data Akun Berhasil Ditambahkan');
-            document.location.href = 'akun.php';
+            document.location.href = 'akun;.php';
           </script>";
   } else {
     echo "<script>

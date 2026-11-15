@@ -31,11 +31,6 @@ if (isset($_POST['tambah'])) {
 
 ?>
 
-<?php include 'adminlte/layout/header.php';
-
-$data_barang = select("SELECT * FROM barang");
-?>
-
   <!-- Content Wrapper. Contains page content -->
    <div class="content-wrapper">
  <div class="container mt-5">
