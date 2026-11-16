@@ -800,3 +800,63 @@ if ($jumlahData > 0 && $filter_error == '') {
     </div>
 
 <?php endif; ?>
+
+<!-- Modal Filter -->
+<div class="modal fade" id="modalFilter" tabindex="-1"
+     aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <!-- Header Modal -->
+            <div class="modal-header bg-success">
+                <h5 class="modal-title" id="exampleModalLabel">
+                    <i class="fas fa-search"></i> Filter Data
+                </h5>
+
+                <button type="button" class="close"
+                        data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- Body Modal -->
+            <div class="modal-body">
+                <form action="index.php" method="get">
+
+                    <div class="form-group">
+                        <label for="tanggal_awal">Tanggal Awal</label>
+                        <input type="date" name="tanggal_awal"
+                               id="tanggal_awal" class="form-control"
+                               value="<?= htmlspecialchars($tanggal_awal); ?>"
+                               required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tanggal_akhir">Tanggal Akhir</label>
+                        <input type="date" name="tanggal_akhir"
+                               id="tanggal_akhir" class="form-control"
+                               value="<?= htmlspecialchars($tanggal_akhir); ?>"
+                               required>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button"
+                                class="btn btn-secondary"
+                                data-dismiss="modal">
+                            Batal
+                        </button>
+
+                        <button type="submit" name="filter" value="1"
+                                class="btn btn-success">
+                            Submit
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<?php include 'adminlte/layout/footer.php'; ?>
